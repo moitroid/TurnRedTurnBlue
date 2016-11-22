@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+
+  
+  
+
+  
+  
+  
+
+  
+
+  <script type="text/javascript" src="/js/lib/dummy.js"></script>
+
+  
+
+  
+
+  
+
+  
+    <link rel="stylesheet" type="text/css" href="/css/result-light.css">
+  
+
+  
+
+  <style type="text/css">
+    
+  </style>
+
+  <title>TurnRed TurnBlue by moitroid</title>
+
+  
+    
+
+
+
+
+<script type='text/javascript'>//<![CDATA[
+window.onload=function(){
+canvas = document.getElementById('helicopter');
+context = canvas.getContext('2d');
+
+var particles = [];
+var redParticles = [];
+var force = 0;
+var push = false;
+var mousePos = null;
+var redform = true;
+var pts = 0;
+var beginning = true; //show the start menu first
+var gameover = false;
+
+function Particle(x, y, speed, lifetime) {
+  this.x = x;
+  this.y = y;
+  this.radius = 4 + Math.random() * 5;
+  this.speed = speed;
+  this.lifetime = lifetime;
+}
+
+function redParticle(x, y, speed, lifetime) {
+  this.x = x;
+  this.y = y;
+  this.radius = 3 + Math.random() * 4;
+  this.speed = speed;
+  this.lifetime = lifetime;
+}
+
+function particle_system(numParticles) {
+  for (var iter = 0; iter < numParticles / 2; iter++) {
+    particles.push(new Particle(canvas.width, Math.random() * canvas.height, -15 + Math.random() * 10, Math.random() * 10));
+  }
+  for (var iter = numParticles / 2; iter < numParticles; iter++) {
+    redParticles.push(new redParticle(canvas.width, Math.random() * canvas.height, -15 + Math.random() * 10, Math.random() * 10));
+  }
+}
+
+function getMousePos(canvas, evt) {
+  var rect = canvas.getBoundingClientRect();
+  return {
+    x: evt.clientX - rect.left,
+    y: evt.clientY - rect.top
+  };
+}
+
+function intersect(a, b) {
+  var dx = a.x - b.x + 15;
+  var dy = a.y - b.y + 15;
+  var distance = Math.sqrt(dx * dx + dy * dy);
+  if (distance < a.radius + b.radius) {
+    return true;
+  }
+  return false;
+}
+canvas.addEventListener('mousemove', function(evt) {
+  mousePos = getMousePos(canvas, evt);
+}, false);
+
+function Player(x, y) {
+  this.x = x;
+  this.y = y;
+  this.radius = 20;
+  this.alive = true;
+  this.update = function() {
+    if (mousePos != null) {
+      this.y = mousePos.y - 15; //force;
+      this.x = mousePos.x - 15;
+    }
+  };
+
+  this.draw = function() {
+    if (redform) {
+      context.fillStyle = 'red';
+    } else {
+      context.fillStyle = 'blue'
+    }
+    context.arc(this.x + 15, this.y + 15, 20, 0, 2 * Math.PI);
+    context.fill();
+  };
+}
+
+
+function update() {
+  player.update();
+}
+
+function generateParticle(part) {
+  if (wave > 0 && wave <= 10000) {
+    //generate them from right of screen
+    part.y = canvas.height * Math.random();
+    part.x = canvas.width;
+    part.radius = 4 + Math.random() * 5;
+  } else if (wave > 10000 && wave <= 20000) {
+    //generate them from top of screen
+    part.y = 0;
+    part.x = canvas.width * Math.random();
+    part.radius = 4 + Math.random() * 5;
+  } else if (wave > 20000 && wave <= 30000) {
+    //generate them from bottom of screen
+    part.y = canvas.height;
+    part.x = canvas.width * Math.random();
+    part.radius = 4 + Math.random() * 5;
+  } else if (wave > 30000 && wave <= 40000) {
+    //generate them from left of screen
+    part.y = canvas.height * Math.random();;
+    part.x = 0;
+    part.radius = 4 + Math.random() * 5;
+  } else if (wave > 40000 && wave <= 50000) {
+    //generate them from right of screen
+    part.y = canvas.height * Math.random();
+    part.x = canvas.width;
+    part.radius = 4 + Math.random() * 5;
+  } else {
+    part.y = canvas.height;
+    part.x = canvas.width * Math.random();
+    part.radius = 4 + Math.random() * 5;
+
+  }
+}
+
+function moveIt(part) {
+  if (wave > 0 && wave <= 10000) {
+    //generate them from right of screen//going left
+    part.x -= part.radius * 1.5;
+  } else if (wave > 10000 && wave <= 20000) {
+    //generate them from top of screen//going down
+    part.y += part.radius * 1.5;
+  } else if (wave > 20000 && wave <= 30000) {
+    //generate them from bottom of screen//going up
+    part.y -= part.radius * 1.5;
+  } else if (wave > 30000 && wave <= 40000) {
+    //generate them from left of screen//going right
+    part.x += part.radius * 1.5;
+  } else if (wave > 40000 && wave <= 50000) {
+    //generate them from right of screen//going left
+    part.x -= part.radius * 1.5;
+  } else {
+    //generate them from bottom of screen//going up
+    part.y -= part.radius * 1.5;
+  }
+}
+
+function checkBounds(part) {
+  if (wave > 0 && wave <= 10000) {
+    if (part.x > 0) return true;
+  } else if (wave > 10000 && wave <= 20000) {
+    if (part.y < canvas.height) return true;
+  } else if (wave > 20000 && wave <= 30000) {
+    if (part.y > 0) return true;
+  } else if (wave > 30000 && wave <= 40000) {
+    if (part.x < canvas.width) return true;
+  } else if (wave > 40000 && wave <= 50000) {
+    if (part.x > 0) return true;
+  } else {
+    if (part.y > 0) return true;
+  }
+  return false;
+}
+
+function draw() {
+  canvas.width = canvas.width;
+  context.fillStyle = "#000000";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fill();
+  if (!gameover && !beginning) {
+    player.draw();
+    for (var iter = 0; iter < particles.length; iter++) {
+      var par = particles[iter];
+      var rpar = redParticles[iter];
+
+      if (checkBounds(par) && (!intersect(player, par))) {
+        context.fillStyle = "blue";
+        context.beginPath();
+        context.arc(par.x, par.y, par.radius, Math.PI * 2, false);
+        context.stroke();
+        context.fill();
+        moveIt(par);
+      } else if (intersect(player, par)) {
+        if (!redform) {
+          pts += 1;
+          generateParticle(par);
+          moveIt(par);
+        } else {
+          gameover = true;
+          break;
+        }
+      } else {
+        generateParticle(par);
+        moveIt(par);
+      }
+
+      if (checkBounds(rpar) && (!intersect(player, rpar))) {
+        context.fillStyle = "red";
+        context.beginPath();
+        context.arc(rpar.x, rpar.y, rpar.radius, Math.PI * 2, false);
+        context.stroke();
+        context.fill();
+        moveIt(rpar);
+      } else if (intersect(player, rpar)) {
+        if (redform) {
+          pts += 1;
+          generateParticle(rpar);
+          moveIt(rpar);
+        } else {
+          gameover = true;
+          break;
+        }
+      } else {
+        generateParticle(rpar);
+        moveIt(rpar);
+      }
+      context.font = "20px Verdana";
+      context.fillStyle = "white"
+      context.fillText("score:" + pts, 20, 370);
+      context.font = "13px Verdana";
+      context.fillText("(click to change color)", 450, 370);
+
+    }
+  } else {
+    if (beginning) {
+      context.font = "45px Verdana";
+      context.fillStyle = "white"
+      context.fillText("Turn ", 200, 120);
+      context.fillStyle = "red"
+      context.fillText("Red", 298, 120);
+      context.fillStyle = "white"
+      context.fillText("Turn ", 200, 175);
+      context.fillStyle = "blue"
+      context.fillText("Blue", 298, 175);
+       context.fillStyle = "white"
+      context.font = "15px Verdana";
+      context.fillText("click to play", 255, 250);
+      context.font = "10px Verdana";
+      context.fillText("(Use mouse for best experience)", 215, 330);
+    } else {
+      var gameovertext = "game over!"
+      var playagain = "click to play"
+      context.font = "45px Verdana";
+      context.fillStyle = "white"
+      context.fillText(gameovertext, 175, 120);
+      context.font = "25px Verdana";
+      context.fillText("SCORE: " + pts, 240, 200);
+      context.font = "15px Verdana";
+      context.fillText(playagain, 255, 250);
+    }
+  }
+
+} //end draw
+
+
+var wave = 0;
+var numParticles = 20;
+particle_system(numParticles);
+
+function game_loop() {
+  if (!gameover) wave += 30;
+  if (wave % 4000 == 0 && wave < 60000) {
+    particle_system(10);
+  }
+  if(wave>50000){
+  	wave = Math.random * 5000;
+    wave *= 10;
+  }
+  update();
+  draw();
+}
+
+
+canvas.addEventListener("click", function() {
+  if (beginning) {
+    beginning = false;
+  } else {
+    if (gameover == false) {
+      console.log('space');
+      if (redform) {
+        redform = false;
+      } else {
+        redform = true;
+      }
+    }
+    if (gameover == true) {
+      particles.splice(0, particles.length);
+      redParticles.splice(0, redParticles.length);
+      particle_system(numParticles);
+      wave = 0;
+      pts = 0
+      gameover = false;
+    }
+  }
+});
+
+var player = new Player(20, 200);
+setInterval(game_loop, 30);
+}//]]> 
+
+</script>
+
+  
+</head>
+
+<body>
+  <canvas id="helicopter" width='600' height='400'></canvas>
+
+  
+</body>
+
+</html>
+
